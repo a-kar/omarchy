@@ -64,13 +64,13 @@ Item {
   property bool rowsLoaded: false
   property string activeMenu: "root"
   property string filterText: ""
-  // Where the next character lands. Every filter write goes through setFilter,
-  // which puts it at the end unless the caller says otherwise; the handful of
-  // direct `filterText = ""` resets only ever empty the text, which the clamp
-  // below covers. Named caretPos, not cursor: `cursorActive` and
-  // `settleCursor` already mean the highlighted row.
+  // Where the next character lands. Any change to the query puts it at the
+  // end, which is where a reset or a restored query wants it, including the
+  // direct `filterText = ...` writes that bypass setFilter; setFilter then
+  // moves it wherever its caller asked. Named caretPos, not cursor:
+  // `cursorActive` and `settleCursor` already mean the highlighted row.
   property int caretPos: 0
-  onFilterTextChanged: if (root.caretPos > root.filterText.length) root.caretPos = root.filterText.length
+  onFilterTextChanged: root.caretPos = root.filterText.length
   property int selectedIndex: 0
   property bool cursorActive: false
   property int requestSerial: 0
@@ -1203,11 +1203,13 @@ Item {
           } else if (event.key === Qt.Key_PageDown) {
             root.select(6)
             event.accepted = true
-          } else if (event.key === Qt.Key_Right && root.caretPos < root.filterText.length) {
+          } else if (event.key === Qt.Key_Right && (root.caretPos < root.filterText.length || event.isAutoRepeat)) {
             // Right keeps activating the row, but only once there is nothing
             // left of the query to walk through -- which is where the caret
             // always sat before it could be moved, so the old reflex still
-            // works on a query you have just finished typing.
+            // works on a query you have just finished typing. Holding Right to
+            // reach the end stops there: a repeat never activates, only a
+            // fresh press does.
             root.moveCaret(event, 1)
             event.accepted = true
           } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Right) {
@@ -1276,14 +1278,8 @@ Item {
             // Room the two halves share. The caret is never given up, so its
             // width comes off the top.
             readonly property real textRoom: Math.max(0, width - caret.width)
-            readonly property real headWant: Math.min(queryHead.implicitWidth, textRoom)
-            readonly property real tailWant: Math.min(queryTail.implicitWidth, textRoom)
-            // When the whole query cannot fit, what is behind the caret must
-            // not push the caret off the end, so it keeps at most half the room
-            // once the text ahead of it needs the rest.
-            readonly property real headRoom: headWant + tailWant <= textRoom
-              ? headWant
-              : Math.max(textRoom - tailWant, textRoom / 2)
+            // Split in MenuModel.caretHeadRoom, where node can test it.
+            readonly property real headRoom: MenuModel.caretHeadRoom(textRoom, queryHead.implicitWidth, queryTail.implicitWidth)
 
             Text {
               id: queryHead

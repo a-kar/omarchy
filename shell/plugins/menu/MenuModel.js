@@ -416,6 +416,19 @@ function caretStep(text, at, direction, byWord) {
   return value.length - rest.length
 }
 
+// How much of the header the text behind the caret gets; the text ahead of it
+// gets the rest. When the query fits, each half gets what it needs. When it
+// does not, the head gives way until it holds half the room, so the caret is
+// never pushed off the end -- but never takes more than it needs, or the tail
+// would be cut short against empty space.
+function caretHeadRoom(room, headWant, tailWant) {
+  var total = Math.max(0, Number(room) || 0)
+  var head = Math.max(0, Math.min(Number(headWant) || 0, total))
+  var tail = Math.max(0, Math.min(Number(tailWant) || 0, total))
+  if (head + tail <= total) return head
+  return Math.min(head, Math.max(total - tail, total / 2))
+}
+
 function displayRow(items, itemOrder, checkedResults, disabledResults, entry, detail, score, section) {
   var target = entry.kind === "link" ? entry.target : entry.id
   return {
@@ -577,6 +590,7 @@ if (typeof module !== "undefined") {
     clampCaret: clampCaret,
     caretInsert: caretInsert,
     caretDelete: caretDelete,
-    caretStep: caretStep
+    caretStep: caretStep,
+    caretHeadRoom: caretHeadRoom
   }
 }
