@@ -302,9 +302,12 @@ function leafIdFor(id) {
 // underscore from the text being searched, which made an alias unfindable by
 // the spelling `omarchy menu summon` documents for it. `description` does not
 // rescue those queries: it is matched whole word, and `power-menu` is one word.
+// The raw spellings go after all the tokenized ones, so a multi-word query that
+// ran across two aliases before still finds them side by side and keeps its score.
 function nameSearchText(entry) {
   if (!entry) return ""
   var parts = [entry.label]
+  var spelled = []
   var values = Array.isArray(entry.aliases) ? entry.aliases : []
   var raw = [leafIdFor(entry.id)]
   for (var i = 0; i < values.length; i++) raw.push(values[i])
@@ -312,9 +315,9 @@ function nameSearchText(entry) {
     var value = String(raw[j] || "")
     var token = searchableToken(value)
     parts.push(token)
-    if (token !== value) parts.push(value)
+    if (token !== value) spelled.push(value)
   }
-  return parts.join(" ").toLowerCase()
+  return parts.concat(spelled).join(" ").toLowerCase()
 }
 
 function termInSearchWords(term, text) {

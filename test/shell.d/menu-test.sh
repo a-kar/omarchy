@@ -193,6 +193,16 @@ assert(menu.matchesQuery(routed.items['apps.htop'], 'system', true), 'menu still
 // declared and documented in, not only by the one with its separators removed.
 assert(menu.matchesQuery(routed.items['system'], 'power-menu', true), 'menu finds a row by an alias typed with its separators')
 assert(menu.matchesQuery(routed.items['system'], 'power menu', true), 'menu still finds the same alias typed as separate words')
+assertEqual(
+  menu.searchScore(routed.items, routed.items['system'], 'power menu'),
+  menu.searchScore(routed.items, routed.items['system'], 'power-menu'),
+  'menu ranks an alias typed as separate words like the alias itself'
+)
+assertEqual(
+  menu.searchScore(routed.items, routed.items['trigger.capture'], 'screen record screenrecording'),
+  menu.searchScore(routed.items, routed.items['trigger.capture'], 'screenrecording'),
+  'menu ranks a query that runs across two aliases like either alias'
+)
 assert(menu.matchesQuery(routed.items['trigger.capture'], 'screen-record', true), 'menu finds a hyphenated alias that no other alias spells out')
 assert(
   menu.matchesQuery(menu.normalizeItem('install.docker-tui', { label: 'Docker TUI', action: 'install-docker-tui' }), 'docker-tui', true),
